@@ -41,11 +41,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Blocks\Block.cs" />
-    <Compile Include="Blocks\Encryptor.cs" />
-    <Compile Include="CompressFileReader.cs" />
-    <Compile Include="CompressFileWriter.cs" />
+    <Compile Include="Blocks\Decriptor.cs" />
+    <Compile Include="Blocks\Encriptor.cs" />
+    <Compile Include="Blocks\Header.cs" />
+    <Compile Include="FileIO\CryptedFileReader.cs" />
+    <Compile Include="FileIO\CryptedFileWriter.cs" />
+    <Compile Include="FileIO\DefaultFileReadr.cs" />
+    <Compile Include="FileIO\DefaultFileWriter.cs" />
+    <Compile Include="Hasher\HashTypes.cs" />
     <Compile Include="Hasher\IHasher.cs" />
     <Compile Include="Hasher\MD5Hasher.cs" />
+    <Compile Include="Processor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

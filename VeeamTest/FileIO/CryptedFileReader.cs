@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace VeeamTest
+namespace VeeamTest.FileIO
 {
-    class CompressFileWriter
+    class CryptedFileReader
     {
     }
 }

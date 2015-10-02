@@ -5,6 +5,11 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeeamTest", "VeeamTest.csproj", "{C958109E-4E49-4246-86DC-83E492391B75}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "..\UnitTests\UnitTests.csproj", "{8BBD3E39-395F-4871-9397-B70ECF0E2AB5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C958109E-4E49-4246-86DC-83E492391B75} = {C958109E-4E49-4246-86DC-83E492391B75}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +20,10 @@ Global
 		{C958109E-4E49-4246-86DC-83E492391B75}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C958109E-4E49-4246-86DC-83E492391B75}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C958109E-4E49-4246-86DC-83E492391B75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8BBD3E39-395F-4871-9397-B70ECF0E2AB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BBD3E39-395F-4871-9397-B70ECF0E2AB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BBD3E39-395F-4871-9397-B70ECF0E2AB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BBD3E39-395F-4871-9397-B70ECF0E2AB5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

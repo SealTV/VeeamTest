@@ -8,7 +8,7 @@ using System;
 
 namespace VeeamTest.Blocks
 {
-    public class Encryptor
+    public class Encroding
     {
         private object lockObj1;
         private object lockObj2;
@@ -17,11 +17,13 @@ namespace VeeamTest.Blocks
 
 
         private Thread[] workers;
-        private int maxSize;
 
-        public Encryptor(int threadsCount, int maxSize)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="threadsCount">Count of workers.</param>
+        public Encroding(int threadsCount)
         {
-            this.maxSize = maxSize;
             this.lockObj1 = new object();
             this.lockObj2 = new object();
 

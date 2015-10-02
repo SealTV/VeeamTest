@@ -11,7 +11,7 @@ namespace VeeamTest
         {
             Queue<byte[]> queue = new Queue<byte[]>();
             queue.Enqueue(Encoding.Unicode.GetBytes("Hello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world"));
-            Encryptor encryprtor = new Encryptor(4, 100);
+            Encroding encryprtor = new Encroding(4);
             //encryprtor.Run();
             encryprtor.Start();
             encryprtor.AddBinaryBlock(Encoding.Unicode.GetBytes("Hello worldHello worldHello dHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world"));
