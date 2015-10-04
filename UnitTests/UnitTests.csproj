@@ -76,6 +76,8 @@
   </Choose>
   <ItemGroup>
     <Compile Include="BlockTests.cs" />
+    <Compile Include="DefaultStreamReaderTest.cs" />
+    <Compile Include="DefaultStreamWriterTests.cs" />
     <Compile Include="HeaderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

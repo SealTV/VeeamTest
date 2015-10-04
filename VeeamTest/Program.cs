@@ -1,34 +1,61 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using VeeamTest.Blocks;
 
 namespace VeeamTest
 {
     public class Program
     {
+        private static Processor proccessor;
+
         public static void Main(string[] args)
         {
-            Queue<byte[]> queue = new Queue<byte[]>();
-            queue.Enqueue(Encoding.Unicode.GetBytes("Hello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world"));
-            Encroding encryprtor = new Encroding(4);
-            //encryprtor.Run();
-            encryprtor.Start();
-            encryprtor.AddBinaryBlock(Encoding.Unicode.GetBytes("Hello worldHello worldHello dHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world"));
-            encryprtor.AddBinaryBlock(Encoding.Unicode.GetBytes("Hello worldHello worsaasdasddasldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world"));
-            encryprtor.AddBinaryBlock(Encoding.Unicode.GetBytes("Hello worldHello wosadasrldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world"));
-            encryprtor.AddBinaryBlock(Encoding.Unicode.GetBytes("Hello worldHellasdao wdssasdasdorldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world"));
-            encryprtor.AddBinaryBlock(Encoding.Unicode.GetBytes("Hello worldHello worldHelasfgagalo worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world"));
-            encryprtor.AddBinaryBlock(Encoding.Unicode.GetBytes("Hello worldHello wasdasorldHadgagello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world"));
-            encryprtor.AddBinaryBlock(Encoding.Unicode.GetBytes("Hello worldHello worldaadsasdasdadHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world"));
-            encryprtor.AddBinaryBlock(Encoding.Unicode.GetBytes("Hello worldHello worasdasldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world"));
-            encryprtor.AddBinaryBlock(Encoding.Unicode.GetBytes("Hello worldHello wordsadasdasddldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world"));
-            encryprtor.AddBinaryBlock(Encoding.Unicode.GetBytes("Hello worldHello woasdasdrldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world"));
-            encryprtor.AddBinaryBlock(Encoding.Unicode.GetBytes("Hello worldHello worsadaldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello worldHello world"));
+            Console.CancelKeyPress += new ConsoleCancelEventHandler(Handler);
+            
+            //System.Threading.Thread t = new System.Threading.Thread(() => { while(true) Console.WriteLine("run"); });
+            //t.Start();
+            //while(true)
+            //{
+            //    string str = Console.ReadLine();
+            //    Console.WriteLine(str);
+            //}
+            
+            Options options = new Options();
+            CommandLine.Parser.Default.ParseArguments(args, options);
 
-            Console.ReadKey();
-            encryprtor.Stop();
-            Console.ReadKey();
+            if(options.IsCompress == options.IsDecompress)
+            {
+                Console.WriteLine(options.GetUsage());
+                Console.WriteLine(0);
+                return;
+            }
+
+            if(options.IsCompress)
+            {
+                // TODO: Compress file
+                proccessor = new Processor(options.InputFileName, options.OutputFileName, options.HashType);
+                proccessor.RunComperss();
+                return;
+            }
+
+            if(options.IsDecompress)
+            {
+                // TODO: Decompress file
+                proccessor = new Processor(options.InputFileName, options.OutputFileName, options.HashType);
+                proccessor.RunDecompress();
+                return;
+            }
+        }
+
+        private static void Handler(object sender, ConsoleCancelEventArgs args)
+        {
+            if(proccessor != null)
+            {
+                proccessor.Abort();
+            }
+
+            Console.WriteLine("Canceled.");
+            Console.WriteLine(0);
+
+            args.Cancel = false;
         }
     }
 }

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace VeeamTest.Hasher
 {
-    public class MD5Hasher : IHasher
+    public class MD5Hasher : Hasher
     {
         private readonly MD5 md5;
 
@@ -13,7 +13,7 @@ namespace VeeamTest.Hasher
             this.md5 = new MD5CryptoServiceProvider();
         }
 
-        public string GetHash(byte[] input, out byte[] output)
+        public override string GetHash(byte[] input, out byte[] output)
         {
             output = this.md5.ComputeHash(input);
 
@@ -26,7 +26,7 @@ namespace VeeamTest.Hasher
             return builder.ToString();
         }
 
-        public bool VerifyHash(byte[] input, byte[] hash)
+        public override bool VerifyHash(byte[] input, byte[] hash)
         {
             var testHash = this.md5.ComputeHash(input);
             var result = hash.SequenceEqual(testHash);

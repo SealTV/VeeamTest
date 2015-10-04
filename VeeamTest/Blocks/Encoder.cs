@@ -1,42 +1,45 @@
-﻿using System.Collections.Generic;
-using System.IO.Compression;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
-
-using VeeamTest.Hasher;
+using System.IO.Compression;
+using System.Linq;
+using System.Text;
 using System.Threading;
-using System;
+using VeeamTest.Hasher;
 
 namespace VeeamTest.Blocks
 {
-    public class Encroding
+    public class Encoder
     {
-        private object lockObj1;
-        private object lockObj2;
+        private object inpitLockObjcet;
+        private object outputLockObjcet;
         private Queue<Block> input;
         private Queue<Block> output;
-
+        private int counter;
 
         private Thread[] workers;
 
+        private HashTypes hashType;
         /// <summary>
         /// 
         /// </summary>
         /// <param name="threadsCount">Count of workers.</param>
-        public Encroding(int threadsCount)
+        public Encoder(int threadsCount, HashTypes hashType)
         {
-            this.lockObj1 = new object();
-            this.lockObj2 = new object();
+            this.inpitLockObjcet = new object();
+            this.outputLockObjcet = new object();
 
             this.input = new Queue<Block>();
             this.output = new Queue<Block>();
 
             this.workers = new Thread[threadsCount];
-            for(int i = 0; i< threadsCount; i++)
+            for(int i = 0; i < threadsCount; i++)
             {
                 this.workers[i] = new Thread(Run);
             }
-        }
 
+            this.hashType = hashType;
+        }
 
         public void Start()
         {
@@ -49,7 +52,7 @@ namespace VeeamTest.Blocks
         public void Stop()
         {
             for(int i = 0; i < this.workers.Length; i++)
-                this.AddBinaryBlock(null);
+                this.AddBlock(null);
 
             foreach(var w in this.workers)
             {
@@ -58,18 +61,17 @@ namespace VeeamTest.Blocks
             }
         }
 
-
         private void Run()
         {
-            IHasher hasher = new MD5Hasher();
+            Hasher.Hasher hasher = Hasher.Hasher.GetHasher(hashType);
             Console.WriteLine("Worker started!");
             Block inputBytes = null;
             do
             {
-                lock (this.lockObj1)
+                lock (this.inpitLockObjcet)
                 {
                     while(this.input.Count == 0)
-                        Monitor.Wait(this.lockObj1);
+                        Monitor.Wait(this.inpitLockObjcet);
                     inputBytes = this.input.Dequeue();
                 }
 
@@ -90,34 +92,35 @@ namespace VeeamTest.Blocks
                     inputBytes.CompresedData = output;
                 }
 
-                lock (this.lockObj2)
+                lock (this.outputLockObjcet)
                 {
                     this.output.Enqueue(inputBytes);
-                    Monitor.PulseAll(this.lockObj2);
+                    Monitor.PulseAll(this.outputLockObjcet);
                 }
             } while(inputBytes != null);
         }
+        
 
-        private int counter;
-        public void AddBinaryBlock(byte[] block)
+        public void AddBlock(Block block)
         {
-            lock (lockObj1)
+            lock (inpitLockObjcet)
             {
-                this.input.Enqueue(block == null? null : new Block { OriginData = block, Id = counter++ });
-                Monitor.PulseAll(this.lockObj1);
+                block.Id = counter++;
+                this.input.Enqueue(block);
+                Monitor.PulseAll(this.inpitLockObjcet);
             }
         }
 
         public Block[] GetAvailableBlocks()
         {
             Block[] result = null;
-            lock (this.lockObj2)
+            lock (this.outputLockObjcet)
             {
                 while(this.output.Count == 0)
-                    Monitor.Wait(this.lockObj2);
+                    Monitor.Wait(this.outputLockObjcet);
 
                 result = this.output.ToArray();
-                this.output.Clear();             
+                this.output.Clear();
             }
 
             return result;
