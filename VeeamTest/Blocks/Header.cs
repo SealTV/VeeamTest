@@ -35,7 +35,7 @@ namespace VeeamTest.Blocks
             };
         }
 
-        public byte[] ToCompresedByteArray()
+        public byte[] ToCompressedByteArray()
         {
             byte[] blockSizeBytes = BitConverter.GetBytes(this.BlockSize);
             byte[] blocksCountBytes = BitConverter.GetBytes(this.BlocksCount);

@@ -3,6 +3,7 @@
     public enum HashTypes
     {
         MD5,
-        SHA256
+        SHA256,
+        Undefined
     }
 }

@@ -20,9 +20,14 @@ namespace VeeamTest.StreamIO
 
         public void WriteBlock(Block block)
         {
-            var buffer = block.ToCompresedByteArray();
+            var buffer = block.ToCompressedByteArray();
             this.stream.Write(buffer, 0, buffer.Length);
         }
 
+        public void WriteBlock(Block block, BinaryWriter writer)
+        {
+            var buffer = block.ToCompressedByteArray();
+            writer.Write(buffer);
+        }
     }
 }

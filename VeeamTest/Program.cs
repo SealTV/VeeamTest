@@ -32,7 +32,7 @@ namespace VeeamTest
             {
                 // TODO: Compress file
                 proccessor = new Processor(options.InputFileName, options.OutputFileName, options.HashType);
-                proccessor.RunComperss();
+                proccessor.RunCompress(options.Blocksize);
                 return;
             }
 

@@ -1,4 +1,5 @@
 ﻿using VeeamTest.Blocks;
+
 using System.IO;
 using NUnit.Framework;
 
@@ -15,11 +16,11 @@ namespace UnitTests
             {
                 Id = 1,
                 Hash = new byte[] { 1, 2, 3, 4 },
-                CompresedData = new byte[] { 1, 2, 3, 4 }
+                CompressedData = new byte[] { 1, 2, 3, 4 }
             };
             
             // Act
-            var buffer = block.ToCompresedByteArray();
+            var buffer = block.ToCompressedByteArray();
 
             // Assert
             Assert.AreEqual(buffer.Length, 16);
@@ -37,7 +38,7 @@ namespace UnitTests
             // Assert
             Assert.AreEqual(block.Id, 1);
             Assert.AreEqual(block.Hash, new byte[] { 1, 2, 3, 4 });
-            Assert.AreEqual(block.CompresedData, new byte[] { 1, 2, 3, 4 });
+            Assert.AreEqual(block.CompressedData, new byte[] { 1, 2, 3, 4 });
         }
     }
 }

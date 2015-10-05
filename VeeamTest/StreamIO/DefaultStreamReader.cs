@@ -4,11 +4,12 @@ using VeeamTest.Blocks;
 
 namespace VeeamTest.StreamIO
 {
-    public  class DefaultStreamReader : IStreamReader
+    public class DefaultStreamReader : IStreamReader
     {
-        private Stream stream;
+        private readonly Stream stream;
 
-        private int blockSize;
+        private readonly int blockSize;
+        private int counter;
 
         public DefaultStreamReader(Stream stream, int blockSize)
         {
@@ -16,16 +17,18 @@ namespace VeeamTest.StreamIO
             this.blockSize = blockSize;
         }
 
-
         public byte[] GetNextBlockBytes()
         {
             byte[] buffer = new byte[this.blockSize];
-            int bytesReadet = this.stream.Read(buffer, 0, this.blockSize);
+            int bytesReaded = this.stream.Read(buffer, 0, this.blockSize);
 
-            if(bytesReadet == this.blockSize)
+            if (bytesReaded == 0)
+                return null;
+
+            if(bytesReaded == this.blockSize)
                 return buffer;
 
-            byte[] result = new byte[bytesReadet];
+            byte[] result = new byte[bytesReaded];
             Array.Copy(buffer, result, result.Length);
 
             return result;
@@ -33,9 +36,36 @@ namespace VeeamTest.StreamIO
 
         public Block GetNextBlock()
         {
-            Block block = new Block();
-          
-            block.OriginData = this.GetNextBlockBytes();
+            var buffer = this.GetNextBlockBytes();
+            Block block = new Block
+            {
+                Id = this.counter++,
+                OriginBlockSize = buffer.Length,
+                OriginData = buffer
+            };
+
+            return block;
+        }
+
+        public Block GetNextBlock(BinaryReader reader)
+        {
+
+            byte[] buffer = new byte[this.blockSize];
+
+            int bytesReaded = reader.Read(buffer, 0, this.blockSize);
+
+            if (bytesReaded == 0)
+                return null;
+
+            byte[] result = new byte[bytesReaded];
+            Array.Copy(buffer, result, result.Length);
+
+            Block block = new Block
+            {
+                Id = this.counter++,
+                OriginData = result
+            };
+
             return block;
         }
     }
