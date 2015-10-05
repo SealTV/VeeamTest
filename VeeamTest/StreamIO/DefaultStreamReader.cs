@@ -43,29 +43,6 @@ namespace VeeamTest.StreamIO
                 OriginBlockSize = buffer.Length,
                 OriginData = buffer
             };
-
-            return block;
-        }
-
-        public Block GetNextBlock(BinaryReader reader)
-        {
-
-            byte[] buffer = new byte[this.blockSize];
-
-            int bytesReaded = reader.Read(buffer, 0, this.blockSize);
-
-            if (bytesReaded == 0)
-                return null;
-
-            byte[] result = new byte[bytesReaded];
-            Array.Copy(buffer, result, result.Length);
-
-            Block block = new Block
-            {
-                Id = this.counter++,
-                OriginData = result
-            };
-
             return block;
         }
     }

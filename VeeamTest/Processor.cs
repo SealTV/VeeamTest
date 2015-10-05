@@ -1,9 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
-using System.Diagnostics;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 
 using VeeamTest.Hasher;
 using VeeamTest.Blocks;
@@ -30,11 +28,14 @@ namespace VeeamTest
         private IStreamReader streamReader;
         private IStreamWriter streamWriter;
 
+        private int blockSize;
+        private bool isRun;
+
         public Processor(string inputFile, string outputFile, HashTypes hashType)
         {
+            this.hashType = hashType;
             this.inputFile = inputFile;
             this.outputFile = outputFile;
-            this.hashType = hashType;
         }
 
         public Processor(string inputFile, string outputFile)
@@ -44,53 +45,92 @@ namespace VeeamTest
             this.hashType = HashTypes.Undefined;
         }
 
-        private int blockSize;
-        public void RunCompress(int blockSize)
+        public bool RunCompress(int blockSize)
         {
-            this.compressorServiceProvider = new Encoder(System.Environment.ProcessorCount, this.hashType);
-            this.inputStream = this.GetInputStream();
+            this.compressorServiceProvider = new Encoder(Environment.ProcessorCount, this.hashType);
+
+            try
+            {
+                this.inputStream = this.GetInputStream();
+                this.outputStream = this.GetOutputStream();
+            }
+            catch(FileNotFoundException e)
+            {
+                Console.WriteLine(e.Message);
+                return false;
+            }
+            catch(FileLoadException e)
+            {
+                Console.WriteLine(e.Message);
+                return false;
+            }
 
             int blocksCount = (int)Math.Ceiling(this.inputStream.Length / (this.blockSize + 0.0));
             this.blockSize = blockSize;
 
             this.streamReader = new DefaultStreamReader(this.inputStream, blockSize);
-            
-            this.outputStream = this.GetOutputStream();
+
             this.streamWriter = new CryptedStreamWriter(this.outputStream);
             Header header = new Header
             {
                 BlockSize = this.blockSize,
                 BlocksCount = blocksCount,
                 HashType = this.hashType,
-                // TODO: change hash size
-                HashSize = 16
+                HashSize = Hasher.Hasher.GetHashSize(this.hashType)
             };
 
             (this.streamWriter as CryptedStreamWriter).WriteHeader(header);
 
-            this.Run();
+            return this.Run();
         }
 
-
-        public void RunDecompress()
+        public bool RunDecompress()
         {
-            //this.compressorServiceProvider = new Decoder(System.Environment.ProcessorCount, this.hashType);
-            this.compressorServiceProvider = new Decoder(1, this.hashType);
-            this.inputStream = this.GetInputStream();
-            Header header = Header.ReadHead(this.inputStream);
+            this.compressorServiceProvider = new Decoder(Environment.ProcessorCount, this.hashType);
+            try
+            {
+                this.inputStream = this.GetInputStream();
+                this.outputStream = this.GetOutputStream();
+            } catch(FileNotFoundException e)
+            {
+                Console.WriteLine("{0} {1} ",e.Message, e.FileName);
+                return false;
+            } catch(FileLoadException e)
+            {
+                Console.WriteLine("{0} {1} ",e.Message, e.FileName);
+                return false; 
+            }
+
+            Header header;
+            try
+            {
+                header = Header.ReadHead(this.inputStream);
+            }catch(ArgumentOutOfRangeException e)
+            {
+                Console.WriteLine(e.Message);
+                if(this.outputStream != null)
+                {
+                    this.outputStream.Close();
+                    File.Delete(this.outputFile);
+                }
+                return false;
+            }
+
             this.blockSize = header.BlockSize;
             this.hashType = header.HashType;
 
+            if(this.hashType == HashTypes.Undefined)
+            {
+                return false;
+            }
+
             this.streamReader = new CryptedStreamReader(this.inputStream, header.HashSize);
-            
-            this.outputStream = this.GetOutputStream();
             this.streamWriter = new DefaultStreamWriter(this.outputStream, this.blockSize);
 
-            this.Run();
+            return this.Run();
         }
 
-        private bool isRun;
-        private void Run()
+        private bool Run()
         {
             this.readTread = new Thread(Read);
             this.writeThread = new Thread(Write);
@@ -108,86 +148,58 @@ namespace VeeamTest
             this.isRun = false;
             this.writeThread.Join();
             Console.WriteLine("End writing.");
+
+            return true;
         }
 
         private void Read()
         {
             long streamLength = this.inputStream.Length;
-            using (var reader = new BinaryReader(this.inputStream))
+     
+            while(streamLength - 1 > this.inputStream.Position)
             {
-                while (streamLength - 1 > this.inputStream.Position)
+                var nextBlock = this.streamReader.GetNextBlock();
+
+                while(!this.compressorServiceProvider.AddBlock(nextBlock))
                 {
-                    var nextBlock = this.streamReader.GetNextBlock(reader);
-                    bool b;
-                    do
-                    {
-                        b = this.compressorServiceProvider.AddBlock(nextBlock);
-                        if (!b)
-                            Thread.Sleep(100);
-                    } while (!b);
+                    Thread.Sleep(10);
                 }
             }
-            //while (streamLength - 1 > this.inputStream.Position)
-            //{
-            //    var nextBlock = this.streamReader.GetNextBlock();
-            //    bool b;
-            //    do
-            //    {
-            //        b = this.compressorServiceProvider.AddBlock(nextBlock);
-            //        if (!b)
-            //            Thread.Sleep(100);
-            //    } while (!b);
-            //}
 
-            this.streamReader = null;
+            this.inputStream.Close();
             this.inputStream.Dispose();
-            this.inputStream = null;
         }
 
         private void Write()
         {
-            //while (this.isRun)
-            //{
-            //    List<Block> blocks;
-            //    if (this.compressorServiceProvider.TryGetAvailableBlocks(out blocks))
-            //    {
-            //        for (int i = 0; i < blocks.Count; i++)
-            //        {
-            //            this.streamWriter.WriteBlock(blocks[i]);
-            //            blocks[i] = null;
-            //            this.outputStream.Flush();
-            //        }
-            //    }
-            //    else
-            //    {
-            //        Thread.Sleep(100);
-            //    }
-            //}
-
-            using (var writer = new BinaryWriter(this.outputStream))
+            List<Block> blocks;
+            do
             {
-                while (this.isRun)
+                if(this.compressorServiceProvider.TryGetAvailableBlocks(out blocks))
                 {
-                    List<Block> blocks;
-                    if (this.compressorServiceProvider.TryGetAvailableBlocks(out blocks))
+                    for(int i = 0; i < blocks.Count; i++)
                     {
-                        for (int i = 0; i < blocks.Count; i++)
-                        {
-                            this.streamWriter.WriteBlock(blocks[i], writer);
-                            blocks[i] = null;
-                            this.outputStream.Flush();
-                        }
-                    }
-                    else
-                    {
-                        Thread.Sleep(100);
+                        this.streamWriter.WriteBlock(blocks[i]);
+                        this.outputStream.Flush();
                     }
                 }
-            }
+                else
+                {
+                    Thread.Sleep(10);
+                }
 
-            this.streamWriter = null;
+            } while(this.isRun);
+
+            if(this.compressorServiceProvider.TryGetAvailableBlocks(out blocks))
+            {
+                for(int i = 0; i < blocks.Count; i++)
+                {
+                    this.streamWriter.WriteBlock(blocks[i]);
+                    this.outputStream.Flush();
+                }
+            }
+            this.outputStream.Close();
             this.outputStream.Dispose();
-            this.outputStream = null;
         }
 
         public void Abort()
@@ -217,6 +229,12 @@ namespace VeeamTest
                 this.compressorServiceProvider.Cancel();
                 Console.WriteLine("Service canceled.");
             }
+
+            if(this.outputStream != null)
+            {
+                this.outputStream.Close();
+                File.Delete(this.outputFile);
+            }
         }
 
         private Stream GetInputStream()
@@ -241,7 +259,7 @@ namespace VeeamTest
                 }
                 else
                 {
-                    throw new FileLoadException();
+                    throw new FileLoadException("Can't load file.", this.outputFile);
                 }
             }
 

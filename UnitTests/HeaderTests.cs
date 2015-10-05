@@ -21,7 +21,7 @@ namespace UnitTests
             };
 
             // Act
-            var buffer = header.ToCompresedByteArray();
+            var buffer = header.ToCompressedByteArray();
             string str = "";
             foreach(var t in buffer)
             {

@@ -1,4 +1,6 @@
-﻿namespace VeeamTest.Hasher
+﻿using System.Text;
+
+namespace VeeamTest.Hasher
 {
     public abstract class Hasher
     {
@@ -15,7 +17,33 @@
             }
         }
 
-        public abstract string GetHash(byte[] input, out byte[] output);
-        public abstract bool VerifyHash(byte[] input, byte[] hash);
+        public static string ToString(byte[] hash)
+        {
+            StringBuilder builder = new StringBuilder();
+            foreach(var @byte in hash)
+            {
+                builder.Append(@byte.ToString("x2"));
+            }
+
+            return builder.ToString();
+        }
+
+
+        public static int GetHashSize(HashTypes hashType)
+        {
+            switch(hashType)
+            {
+                case HashTypes.SHA256:
+                    return 32;
+                case HashTypes.MD5:
+                    return 16;
+                default:
+                    return 16;
+            }
+        }
+
+
+        public abstract byte[] GetHash(byte[] input);
+        public abstract bool VerifyHash(byte[] originData, byte[] hash);
     }
 }

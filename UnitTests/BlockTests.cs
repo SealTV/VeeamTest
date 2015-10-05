@@ -15,30 +15,34 @@ namespace UnitTests
             Block block = new Block()
             {
                 Id = 1,
+                OriginBlockSize = 1,
                 Hash = new byte[] { 1, 2, 3, 4 },
-                CompressedData = new byte[] { 1, 2, 3, 4 }
+            //    CompressedData = new byte[] { 1, 2, 3, 4 }
+                OriginData = new byte[] { 1, 2, 3, 4 }
             };
             
             // Act
             var buffer = block.ToCompressedByteArray();
 
             // Assert
-            Assert.AreEqual(buffer.Length, 16);
+            Assert.AreEqual(buffer.Length, 20);
         }
 
         [Test]
         public void GetBlockFromStreamTest()
         {
             // Arrage
-            var buffer = new byte[] {12, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, 4, 1, 2, 3, 4};
+            var buffer = new byte[] {16, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, 4, 1};
 
             // Act
             Block block = Block.ReadBlock(new MemoryStream(buffer), 4);
 
             // Assert
             Assert.AreEqual(block.Id, 1);
+            Assert.AreEqual(block.OriginBlockSize, 1);
             Assert.AreEqual(block.Hash, new byte[] { 1, 2, 3, 4 });
-            Assert.AreEqual(block.CompressedData, new byte[] { 1, 2, 3, 4 });
+          //  Assert.AreEqual(block.CompressedData, new byte[] { 1, 2, 3, 4 });
+            Assert.AreEqual(block.OriginData, new byte[] { 1});
         }
     }
 }

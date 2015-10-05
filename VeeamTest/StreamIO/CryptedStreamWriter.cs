@@ -14,7 +14,7 @@ namespace VeeamTest.StreamIO
 
         public void WriteHeader(Header header)
         {
-            var buffer = header.ToCompresedByteArray();
+            var buffer = header.ToCompressedByteArray();
             this.stream.Write(buffer, 0, buffer.Length);
         }
 
@@ -22,12 +22,6 @@ namespace VeeamTest.StreamIO
         {
             var buffer = block.ToCompressedByteArray();
             this.stream.Write(buffer, 0, buffer.Length);
-        }
-
-        public void WriteBlock(Block block, BinaryWriter writer)
-        {
-            var buffer = block.ToCompressedByteArray();
-            writer.Write(buffer);
         }
     }
 }

@@ -13,22 +13,14 @@ namespace VeeamTest.Hasher
             this.md5 = new MD5CryptoServiceProvider();
         }
 
-        public override string GetHash(byte[] input, out byte[] output)
+        public override byte[] GetHash(byte[] input)
         {
-            output = this.md5.ComputeHash(input);
-
-            StringBuilder builder = new StringBuilder();
-            foreach(var @byte in output)
-            {
-                builder.Append(@byte.ToString("x2"));
-            }
-
-            return builder.ToString();
+            return this.md5.ComputeHash(input);
         }
 
-        public override bool VerifyHash(byte[] input, byte[] hash)
+        public override bool VerifyHash(byte[] originData, byte[] hash)
         {
-            var testHash = this.md5.ComputeHash(input);
+            var testHash = this.md5.ComputeHash(originData);
             var result = hash.SequenceEqual(testHash);
             return result;
         }

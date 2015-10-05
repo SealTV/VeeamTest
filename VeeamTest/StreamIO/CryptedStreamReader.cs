@@ -7,7 +7,6 @@ namespace VeeamTest.StreamIO
     {
         private readonly Stream stream;
         private readonly int hashSize;
-
         public CryptedStreamReader(Stream stream, int hashSize)
         {
             this.stream = stream;
@@ -17,12 +16,6 @@ namespace VeeamTest.StreamIO
         public Block GetNextBlock()
         {
             var block = Block.ReadBlock(this.stream, this.hashSize);
-            return block;
-        }
-
-        public Block GetNextBlock(BinaryReader reader)
-        {
-            var block = Block.ReadBlock(reader, this.hashSize);
             return block;
         }
     }

@@ -9,38 +9,32 @@ namespace VeeamTest
         public static void Main(string[] args)
         {
             Console.CancelKeyPress += new ConsoleCancelEventHandler(Handler);
-            
-            //System.Threading.Thread t = new System.Threading.Thread(() => { while(true) Console.WriteLine("run"); });
-            //t.Start();
-            //while(true)
-            //{
-            //    string str = Console.ReadLine();
-            //    Console.WriteLine(str);
-            //}
-            
+
             Options options = new Options();
             CommandLine.Parser.Default.ParseArguments(args, options);
 
-            if(options.IsCompress == options.IsDecompress)
+            if(options.IsCompress == options.IsDecompress
+                || string.IsNullOrEmpty(options.InputFileName) || string.IsNullOrEmpty(options.OutputFileName))
             {
-                Console.WriteLine(options.GetUsage());
                 Console.WriteLine(0);
                 return;
             }
 
             if(options.IsCompress)
             {
-                // TODO: Compress file
+                // note: Compress file
                 proccessor = new Processor(options.InputFileName, options.OutputFileName, options.HashType);
-                proccessor.RunCompress(options.Blocksize);
+                var result = proccessor.RunCompress(options.Blocksize);
+                Console.WriteLine(result ? 1 : 0);
                 return;
             }
 
             if(options.IsDecompress)
             {
-                // TODO: Decompress file
+                // note: Decompress file
                 proccessor = new Processor(options.InputFileName, options.OutputFileName, options.HashType);
-                proccessor.RunDecompress();
+                var result = proccessor.RunDecompress();
+                Console.WriteLine(result ? 1 : 0);
                 return;
             }
         }

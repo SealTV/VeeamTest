@@ -17,13 +17,7 @@ namespace VeeamTest.StreamIO
 
         public void WriteBlock(Block block)
         {
-            this.stream.Position = this.blockSize * block.Id;
-            this.stream.Write(block.OriginData, 0, block.OriginData.Length);
-        }
-
-        public void WriteBlock(Block block, BinaryWriter writer)
-        {
-            this.stream.Position = this.blockSize * block.Id;
+            this.stream.Position = this.blockSize * (long)block.Id;
             this.stream.Write(block.OriginData, 0, block.OriginData.Length);
         }
     }
