@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <StartArguments>-d -i C:/data/test/2.txt -o C:/data/test/3.txt</StartArguments>
+    <StartArguments>-d -i C:/data/test/1.txt -o C:/data/test/2.txt</StartArguments>
   </PropertyGroup>
 </Project>

@@ -174,7 +174,16 @@ namespace VeeamTest
      
             while(streamLength - 1 > this.inputStream.Position)
             {
-                var nextBlock = this.streamReader.GetNextBlock();
+                Block nextBlock;
+                try
+                {
+                    nextBlock = this.streamReader.GetNextBlock();
+                }
+                catch (ArgumentOutOfRangeException e)
+                {
+                    this.isAborder = true;
+                    return;
+                }
 
                 while(!this.encoderServiceProvider.TryAddBlock(nextBlock))
                 {
