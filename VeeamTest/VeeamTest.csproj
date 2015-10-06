@@ -63,7 +63,8 @@
     <Compile Include="Blocks\Encoder.cs" />
     <Compile Include="Blocks\Decoder.cs" />
     <Compile Include="Blocks\Header.cs" />
-    <Compile Include="Blocks\CompressorServiceProvider.cs" />
+    <Compile Include="Blocks\EncoderServiceProvider.cs" />
+    <Compile Include="Hasher\SHA256Hasher.cs" />
     <Compile Include="Options.cs" />
     <Compile Include="StreamIO\CryptedStreamReader.cs" />
     <Compile Include="StreamIO\CryptedStreamWriter.cs" />

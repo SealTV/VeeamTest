@@ -9,7 +9,7 @@ namespace VeeamTest.StreamIO
         private readonly Stream stream;
 
         private readonly int blockSize;
-        private int counter;
+        private uint counter;
 
         public DefaultStreamReader(Stream stream, int blockSize)
         {
@@ -41,8 +41,9 @@ namespace VeeamTest.StreamIO
             {
                 Id = this.counter++,
                 OriginBlockSize = buffer.Length,
-                OriginData = buffer
+                Data = buffer
             };
+
             return block;
         }
     }

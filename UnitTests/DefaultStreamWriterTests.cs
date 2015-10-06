@@ -22,13 +22,13 @@ namespace UnitTests
             Block block1 = new Block()
             {
                 Id = 0,
-                OriginData = new byte[] { 1, 1, 1, 1 }
+                Data = new byte[] { 1, 1, 1, 1 }
             };
 
             Block block2 = new Block()
             {
                 Id = 1,
-                OriginData = new byte[] { 2, 2 }
+                Data = new byte[] { 2, 2 }
             };
 
             // Act
@@ -52,19 +52,19 @@ namespace UnitTests
             Block block1 = new Block()
             {
                 Id = 0,
-                OriginData = new byte[] { 1, 1, 1, 1 }
+                Data = new byte[] { 1, 1, 1, 1 }
             };
 
             Block block2 = new Block()
             {
                 Id = 1,
-                OriginData = new byte[] { 2, 2, 2, 2 }
+                Data = new byte[] { 2, 2, 2, 2 }
             };
 
             Block block3 = new Block()
             {
                 Id = 2,
-                OriginData = new byte[] { 3, 3 }
+                Data = new byte[] { 3, 3 }
             };
 
             // Act

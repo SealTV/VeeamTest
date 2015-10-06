@@ -5,11 +5,11 @@ namespace VeeamTest
 {
     internal class Options
     {
-        [Option('c', "compress", Required = false, HelpText = "Define commpress proccess.")]
+        [Option('c', "compress", Required = false, HelpText = "Define compress process.")]
         public bool IsCompress
         { get; set; }
 
-        [Option('d', "decompress", Required = false, HelpText = "Define decommpress proccess.")]
+        [Option('d', "decompress", Required = false, HelpText = "Define decompress process.")]
         public bool IsDecompress
         { get; set; }
 

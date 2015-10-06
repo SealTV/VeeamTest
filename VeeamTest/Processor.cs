@@ -18,10 +18,10 @@ namespace VeeamTest
         private Stream inputStream;
         private Stream outputStream;
 
-        private Thread readTread;
-        private Thread writeThread;
+        private Thread producerTread;
+        private Thread consumerThread;
 
-        private CompressorServiceProvider compressorServiceProvider;
+        private EncoderServiceProvider encoderServiceProvider;
 
         private HashTypes hashType;
 
@@ -30,6 +30,7 @@ namespace VeeamTest
 
         private int blockSize;
         private bool isRun;
+        private bool isAborder;
 
         public Processor(string inputFile, string outputFile, HashTypes hashType)
         {
@@ -45,9 +46,15 @@ namespace VeeamTest
             this.hashType = HashTypes.Undefined;
         }
 
+        // Run compress process 
         public bool RunCompress(int blockSize)
         {
-            this.compressorServiceProvider = new Encoder(Environment.ProcessorCount, this.hashType);
+            //this.encoderServiceProvider = new Encoder(Environment.ProcessorCount, this.hashType, s =>
+            this.encoderServiceProvider = new Encoder(1, this.hashType, s =>
+            {
+                Console.WriteLine(s);
+                this.Abort();
+            });
 
             try
             {
@@ -65,7 +72,7 @@ namespace VeeamTest
                 return false;
             }
 
-            int blocksCount = (int)Math.Ceiling(this.inputStream.Length / (this.blockSize + 0.0));
+            uint blocksCount = (uint)Math.Ceiling(this.inputStream.Length / (this.blockSize + 0.0));
             this.blockSize = blockSize;
 
             this.streamReader = new DefaultStreamReader(this.inputStream, blockSize);
@@ -78,15 +85,15 @@ namespace VeeamTest
                 HashType = this.hashType,
                 HashSize = Hasher.Hasher.GetHashSize(this.hashType)
             };
-
             (this.streamWriter as CryptedStreamWriter).WriteHeader(header);
 
-            return this.Run();
+            this.Run();
+            return !isAborder;
         }
 
+        // Run decompress process
         public bool RunDecompress()
         {
-            this.compressorServiceProvider = new Decoder(Environment.ProcessorCount, this.hashType);
             try
             {
                 this.inputStream = this.GetInputStream();
@@ -101,16 +108,20 @@ namespace VeeamTest
                 return false; 
             }
 
+            this.streamReader = new CryptedStreamReader(this.inputStream);
             Header header;
             try
             {
-                header = Header.ReadHead(this.inputStream);
-            }catch(ArgumentOutOfRangeException e)
+                header = ((CryptedStreamReader)this.streamReader).GetHeader();
+            }
+            catch (ArgumentOutOfRangeException e)
             {
                 Console.WriteLine(e.Message);
-                if(this.outputStream != null)
+                if (this.outputStream != null)
                 {
                     this.outputStream.Close();
+                    this.outputStream.Dispose();
+
                     File.Delete(this.outputFile);
                 }
                 return false;
@@ -119,40 +130,45 @@ namespace VeeamTest
             this.blockSize = header.BlockSize;
             this.hashType = header.HashType;
 
-            if(this.hashType == HashTypes.Undefined)
+            if (this.hashType == HashTypes.Undefined)
             {
                 return false;
             }
 
-            this.streamReader = new CryptedStreamReader(this.inputStream, header.HashSize);
+            this.encoderServiceProvider = new Decoder(Environment.ProcessorCount, this.hashType, s =>
+            {
+                Console.WriteLine(s);
+                this.Abort();
+            }); 
+
             this.streamWriter = new DefaultStreamWriter(this.outputStream, this.blockSize);
 
-            return this.Run();
+            this.Run();
+            return !isAborder;
         }
 
-        private bool Run()
+        // Start threads and wait when all thread were stoped.
+        private void Run()
         {
-            this.readTread = new Thread(Read);
-            this.writeThread = new Thread(Write);
-         
-            this.readTread.Start();
-            this.compressorServiceProvider.Start();
+            this.producerTread = new Thread(Produce);
+            this.producerTread.Priority = ThreadPriority.AboveNormal;
+
+            this.consumerThread = new Thread(Consume);
+            this.consumerThread.Priority = ThreadPriority.AboveNormal;
+
+            this.producerTread.Start();
+            this.encoderServiceProvider.Start();
 
             this.isRun = true;
-            this.writeThread.Start();
-
-            this.readTread.Join();
-            Console.WriteLine("End reading.");
-            this.compressorServiceProvider.Stop();
-
+            this.consumerThread.Start();
+            this.producerTread.Join();
+            this.encoderServiceProvider.Stop();
             this.isRun = false;
-            this.writeThread.Join();
-            Console.WriteLine("End writing.");
-
-            return true;
+            this.consumerThread.Join();
         }
 
-        private void Read()
+        // Read blocks from input stream and insert into service
+        private void Produce()
         {
             long streamLength = this.inputStream.Length;
      
@@ -160,9 +176,16 @@ namespace VeeamTest
             {
                 var nextBlock = this.streamReader.GetNextBlock();
 
-                while(!this.compressorServiceProvider.AddBlock(nextBlock))
+                while(!this.encoderServiceProvider.TryAddBlock(nextBlock))
                 {
-                    Thread.Sleep(10);
+                    try
+                    {
+                        Thread.Sleep(10);
+                    }
+                    catch (ThreadInterruptedException e)
+                    {
+                        return;
+                    }
                 }
             }
 
@@ -170,12 +193,13 @@ namespace VeeamTest
             this.inputStream.Dispose();
         }
 
-        private void Write()
+        // Get blocks from service and write data into output stream.
+        private void Consume()
         {
             List<Block> blocks;
             do
             {
-                if(this.compressorServiceProvider.TryGetAvailableBlocks(out blocks))
+                if(this.encoderServiceProvider.TryGetAvailableBlocks(out blocks))
                 {
                     for(int i = 0; i < blocks.Count; i++)
                     {
@@ -185,54 +209,55 @@ namespace VeeamTest
                 }
                 else
                 {
-                    Thread.Sleep(10);
+                    try
+                    {
+                        Thread.Sleep(10);
+                    }
+                    catch (ThreadInterruptedException e)
+                    {
+                        return;
+                    }
                 }
 
             } while(this.isRun);
 
-            if(this.compressorServiceProvider.TryGetAvailableBlocks(out blocks))
-            {
+            // Try get from buffer lasted blocks.
+            if(this.encoderServiceProvider.TryGetAvailableBlocks(out blocks))
                 for(int i = 0; i < blocks.Count; i++)
                 {
                     this.streamWriter.WriteBlock(blocks[i]);
                     this.outputStream.Flush();
                 }
-            }
             this.outputStream.Close();
             this.outputStream.Dispose();
         }
 
         public void Abort()
         {
-            try
+            this.isAborder = true;
+            if (this.producerTread != null)
             {
-                if(this.readTread != null)
-                    this.readTread.Abort();
-            }
-            catch(ThreadAbortException e)
-            {
-                Console.WriteLine("Reading canceled.");
+                this.producerTread.Interrupt();
+                this.producerTread.Join();
             }
 
-            try
+            if (this.consumerThread != null)
             {
-                if(this.writeThread != null)
-                    this.writeThread.Abort();
+                this.consumerThread.Interrupt();
+                this.consumerThread.Join();
             }
-            catch(ThreadAbortException e)
+           
+            if (this.encoderServiceProvider != null)
             {
-                Console.WriteLine("Writing canceled.");
-            }
-
-            if (this.compressorServiceProvider != null)
-            {
-                this.compressorServiceProvider.Cancel();
+                this.encoderServiceProvider.Cancel();
                 Console.WriteLine("Service canceled.");
             }
 
             if(this.outputStream != null)
             {
                 this.outputStream.Close();
+                this.outputStream.Dispose();
+
                 File.Delete(this.outputFile);
             }
         }
@@ -257,10 +282,8 @@ namespace VeeamTest
                 {
                     return File.Open(this.outputFile, FileMode.Truncate, FileAccess.Write, FileShare.Read);
                 }
-                else
-                {
-                    throw new FileLoadException("Can't load file.", this.outputFile);
-                }
+
+                throw new FileLoadException("Can't load file.", this.outputFile);
             }
 
             return File.Open(this.outputFile, FileMode.Create, FileAccess.Write, FileShare.Read);
@@ -276,13 +299,7 @@ namespace VeeamTest
                     str = str.ToLower();
             }
             while (str != "yes" && str != "y" && str != "no" && str != "n");
-
-            if(str == "yes" || str == "y")
-            {
-                return true;
-            }
-
-            return false;
+            return str == "yes" || str == "y";
         }
     }
 }

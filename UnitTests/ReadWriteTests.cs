@@ -2,7 +2,9 @@
 
 namespace UnitTests
 {
+    using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
 
@@ -19,10 +21,11 @@ namespace UnitTests
             // Assert 
             byte[] originBytes = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
-            Encoder encoder = new Encoder(1, HashTypes.MD5);
+            Encoder encoder = new Encoder(1, HashTypes.MD5, Console.WriteLine);
+
             DefaultStreamReader dReader = new DefaultStreamReader(new MemoryStream(originBytes), 11);
 
-            Header h1 = new Header()
+            Header h1 = new Header
             {
                 BlocksCount = 3,
                 BlockSize = 11,
@@ -34,9 +37,27 @@ namespace UnitTests
             var b2 = dReader.GetNextBlock();
             var b3 = dReader.GetNextBlock();
 
-            encoder.AddBlock(b1);
-            encoder.AddBlock(b2);
-            encoder.AddBlock(b3);
+            encoder.TryAddBlock(new Block()
+            {
+                Data = b1.Data,
+                Hash = b1.Hash,
+                OriginBlockSize = b1.OriginBlockSize,
+                Id = b1.Id
+            });
+            encoder.TryAddBlock(new Block()
+            {
+                Data = b3.Data,
+                Hash = b3.Hash,
+                OriginBlockSize = b3.OriginBlockSize,
+                Id = b3.Id
+            });
+            encoder.TryAddBlock(new Block()
+            {
+                Data = b2.Data,
+                Hash = b2.Hash,
+                OriginBlockSize = b2.OriginBlockSize,
+                Id = b2.Id
+            });
 
             encoder.Start();
 
@@ -55,17 +76,17 @@ namespace UnitTests
 
             bufferStream.Seek(0, SeekOrigin.Begin);
 
-            Header h2 = Header.ReadHead(bufferStream);
-            CryptedStreamReader cryptedStreamReader = new CryptedStreamReader(bufferStream, 16);
+            CryptedStreamReader cryptedStreamReader = new CryptedStreamReader(bufferStream);
+            Header h2 = cryptedStreamReader.GetHeader();
             var b11 = cryptedStreamReader.GetNextBlock();
             var b21 = cryptedStreamReader.GetNextBlock();
             var b31 = cryptedStreamReader.GetNextBlock();
 
-            Decoder decoder = new Decoder(1, HashTypes.MD5);
+            Decoder decoder = new Decoder(1, HashTypes.MD5, Console.WriteLine);
 
-            decoder.AddBlock(b11);
-            decoder.AddBlock(b21);
-            decoder.AddBlock(b31);
+            decoder.TryAddBlock(b11);
+            decoder.TryAddBlock(b21);
+            decoder.TryAddBlock(b31);
 
             decoder.Start();
             decoder.Stop();
@@ -81,18 +102,15 @@ namespace UnitTests
 
             Assert.AreEqual(b1.Id, b11.Id);
             Assert.AreEqual(b1.OriginBlockSize, b11.OriginBlockSize);
-            Assert.AreEqual(b1.OriginData, b11.OriginData);
-            Assert.AreEqual(b1.Hash, b11.Hash);
+            Assert.AreEqual(b1.Data, b11.Data);
 
-            Assert.AreEqual(b2.Id, b21.Id);
-            Assert.AreEqual(b2.OriginBlockSize, b21.OriginBlockSize);
-            Assert.AreEqual(b2.OriginData, b21.OriginData);
-            Assert.AreEqual(b2.Hash, b21.Hash);
+            Assert.AreEqual(b3.Id, b21.Id);
+            Assert.AreEqual(b3.OriginBlockSize, b21.OriginBlockSize);
+            Assert.AreEqual(b3.Data, b21.Data);
 
-            Assert.AreEqual(b3.Id, b31.Id);
-            Assert.AreEqual(b3.OriginBlockSize, b31.OriginBlockSize);
-            Assert.AreEqual(b3.OriginData, b31.OriginData);
-            Assert.AreEqual(b3.Hash, b31.Hash);
+            Assert.AreEqual(b2.Id, b31.Id);
+            Assert.AreEqual(b2.OriginBlockSize, b31.OriginBlockSize);
+            Assert.AreEqual(b2.Data, b31.Data);
         }
     }
 }

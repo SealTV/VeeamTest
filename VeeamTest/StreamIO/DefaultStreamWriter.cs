@@ -3,10 +3,11 @@ using VeeamTest.Blocks;
 
 namespace VeeamTest.StreamIO
 {
+
     public class DefaultStreamWriter : IStreamWriter
     {
-        private Stream stream;
-        private int blockSize;
+        private readonly Stream stream;
+        private readonly int blockSize;
 
         public DefaultStreamWriter(Stream stream, int blockSize)
         {
@@ -17,8 +18,13 @@ namespace VeeamTest.StreamIO
 
         public void WriteBlock(Block block)
         {
-            this.stream.Position = this.blockSize * (long)block.Id;
-            this.stream.Write(block.OriginData, 0, block.OriginData.Length);
+            WriteBlock(block.Data, block.Id);
+        }
+
+        public void WriteBlock(byte[] data, long id)
+        {
+            this.stream.Position = this.blockSize * id;
+            this.stream.Write(data, 0, data.Length);
         }
     }
 }

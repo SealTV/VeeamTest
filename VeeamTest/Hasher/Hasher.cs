@@ -9,7 +9,7 @@ namespace VeeamTest.Hasher
             switch(hashType)
             {
                 case HashTypes.SHA256:
-                    throw new System.ArgumentNullException();
+                    return new SHA256Hasher();
                 case HashTypes.MD5:
                     return new MD5Hasher();
                 default:

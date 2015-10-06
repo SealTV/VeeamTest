@@ -7,7 +7,7 @@ namespace VeeamTest.Blocks
     public class Header
     {
         public int BlockSize { get; set; }
-        public int BlocksCount { get; set; }
+        public uint BlocksCount { get; set; }
         public HashTypes HashType { get; set; }
         public int HashSize { get; set; }
 
@@ -19,7 +19,7 @@ namespace VeeamTest.Blocks
             int blockSize = BitConverter.ToInt32(bytes, 0);
 
             stream.Read(bytes, 0, bytes.Length);
-            int blocksCount = BitConverter.ToInt32(bytes, 0);
+            uint blocksCount = BitConverter.ToUInt32(bytes, 0);
 
             int hashType = stream.ReadByte();
             
@@ -35,7 +35,7 @@ namespace VeeamTest.Blocks
             };
         }
 
-        public byte[] ToCompressedByteArray()
+        public byte[] ToByteArray()
         {
             byte[] blockSizeBytes = BitConverter.GetBytes(this.BlockSize);
             byte[] blocksCountBytes = BitConverter.GetBytes(this.BlocksCount);

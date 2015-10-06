@@ -14,13 +14,13 @@ namespace VeeamTest.StreamIO
 
         public void WriteHeader(Header header)
         {
-            var buffer = header.ToCompressedByteArray();
+            var buffer = header.ToByteArray();
             this.stream.Write(buffer, 0, buffer.Length);
         }
 
         public void WriteBlock(Block block)
         {
-            var buffer = block.ToCompressedByteArray();
+            var buffer = block.ToByteArray();
             this.stream.Write(buffer, 0, buffer.Length);
         }
     }

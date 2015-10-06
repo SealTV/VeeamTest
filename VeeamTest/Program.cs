@@ -8,13 +8,12 @@ namespace VeeamTest
 
         public static void Main(string[] args)
         {
-            Console.CancelKeyPress += new ConsoleCancelEventHandler(Handler);
+            Console.CancelKeyPress += Handler;
 
             Options options = new Options();
             CommandLine.Parser.Default.ParseArguments(args, options);
 
-            if(options.IsCompress == options.IsDecompress
-                || string.IsNullOrEmpty(options.InputFileName) || string.IsNullOrEmpty(options.OutputFileName))
+            if(options.IsCompress == options.IsDecompress || string.IsNullOrEmpty(options.InputFileName) || string.IsNullOrEmpty(options.OutputFileName))
             {
                 Console.WriteLine(0);
                 return;
@@ -22,7 +21,6 @@ namespace VeeamTest
 
             if(options.IsCompress)
             {
-                // note: Compress file
                 proccessor = new Processor(options.InputFileName, options.OutputFileName, options.HashType);
                 var result = proccessor.RunCompress(options.Blocksize);
                 Console.WriteLine(result ? 1 : 0);
@@ -31,8 +29,7 @@ namespace VeeamTest
 
             if(options.IsDecompress)
             {
-                // note: Decompress file
-                proccessor = new Processor(options.InputFileName, options.OutputFileName, options.HashType);
+                proccessor = new Processor(options.InputFileName, options.OutputFileName);
                 var result = proccessor.RunDecompress();
                 Console.WriteLine(result ? 1 : 0);
                 return;
