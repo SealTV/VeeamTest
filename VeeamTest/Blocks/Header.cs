@@ -11,30 +11,6 @@ namespace VeeamTest.Blocks
         public HashTypes HashType { get; set; }
         public int HashSize { get; set; }
 
-
-        public static Header ReadHead(Stream stream)
-        {
-            byte[] bytes = new byte[4];
-            stream.Read(bytes, 0, bytes.Length);
-            int blockSize = BitConverter.ToInt32(bytes, 0);
-
-            stream.Read(bytes, 0, bytes.Length);
-            uint blocksCount = BitConverter.ToUInt32(bytes, 0);
-
-            int hashType = stream.ReadByte();
-            
-            stream.Read(bytes, 0, bytes.Length);
-            int hashSize = BitConverter.ToInt32(bytes, 0);
-            
-            return new Header()
-            {
-                BlockSize = blockSize,
-                BlocksCount = blocksCount,
-                HashType = (HashTypes)hashType,
-                HashSize = hashSize
-            };
-        }
-
         public byte[] ToByteArray()
         {
             byte[] blockSizeBytes = BitConverter.GetBytes(this.BlockSize);

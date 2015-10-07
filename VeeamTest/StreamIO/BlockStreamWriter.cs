@@ -1,13 +1,14 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using VeeamTest.Blocks;
 
 namespace VeeamTest.StreamIO
 {
-    public class CryptedStreamWriter : IStreamWriter
+    public class BlockStreamWriter : IStreamWriter
     {
         private Stream stream;
 
-        public CryptedStreamWriter(Stream stream)
+        public BlockStreamWriter(Stream stream)
         {
             this.stream = stream;
         }
