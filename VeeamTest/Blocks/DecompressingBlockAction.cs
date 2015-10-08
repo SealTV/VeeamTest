@@ -3,14 +3,12 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 
-using VeeamTest.Hasher;
-
 namespace VeeamTest.Blocks
 {
 
     public class DecompressingBlockAction : IBlockHandlingAction
     {
-        private Hasher.Hasher hasher;
+        private readonly Hasher.Hasher hasher;
         public DecompressingBlockAction(Hasher.Hasher hasher)
         {
             this.hasher = hasher;
@@ -30,6 +28,7 @@ namespace VeeamTest.Blocks
                 }
 
             }
+
             block.Data = data;
             byte[] hash = this.hasher.GetHash(block.Data);
 

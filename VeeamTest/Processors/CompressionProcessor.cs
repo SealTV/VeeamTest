@@ -1,18 +1,19 @@
 ﻿using System;
 using System.IO;
+
 using VeeamTest.Blocks;
 using VeeamTest.Hasher;
 using VeeamTest.StreamIO;
 
-namespace VeeamTest
+namespace VeeamTest.Processor
 {
-    internal class CompressionProcessor : Processor
+    internal class CompressionProcessor : BaseProcessor
     {
         public CompressionProcessor(Stream inputStream, Stream outputStream, int blockSize, HashTypes hashType = HashTypes.Undefined)
             : base(inputStream, outputStream, OperationType.Compress, blockSize, hashType)
         {}
 
-        public override bool Init()
+        protected override bool Init()
         {
             uint blocksCount = (uint)Math.Ceiling(this.inputStream.Length / (this.blockSize + 0.0));
 

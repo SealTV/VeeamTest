@@ -7,7 +7,7 @@ namespace VeeamTest.Blocks
 
     public class CompressingBlockAction : IBlockHandlingAction
     {
-        private Hasher.Hasher hasher;
+        private readonly Hasher.Hasher hasher;
         public CompressingBlockAction(Hasher.Hasher hasher)
         {
             this.hasher = hasher;
