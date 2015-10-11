@@ -8,31 +8,28 @@ using VeeamTest.Blocks;
 using VeeamTest.StreamIO;
 
 
-namespace VeeamTest
+namespace VeeamTest.Processor
 {
-    internal abstract class Processor
+    internal abstract class BaseProcessor
     {
-        protected readonly string inputFile;
-        protected readonly string outputFile;
-
         protected int blockSize;
-        protected Stream inputStream;
-        protected Stream outputStream;
-       
-        protected BlocksHandler blocksHandler;
+        protected readonly Stream inputStream;
+        protected readonly Stream outputStream;
+
+        private BlocksHandler blocksHandler;
 
         protected HashTypes hashType;
-        protected OperationType operationType;
+        private readonly OperationType operationType;
 
         protected IStreamReader streamReader;
         protected IStreamWriter streamWriter;
 
-        protected bool isRun;
-        protected bool isAborder;
+        private bool isRun;
+        private bool isAborder;
         private Thread producerTread;
         private Thread consumerThread;
 
-        protected Processor(Stream inputStream, Stream outputStream, OperationType operationType, int blockSize, HashTypes hashType = HashTypes.Undefined)
+        protected BaseProcessor(Stream inputStream, Stream outputStream, OperationType operationType, int blockSize, HashTypes hashType = HashTypes.Undefined)
         {
             this.hashType = hashType;
             this.inputStream = inputStream;
@@ -41,7 +38,7 @@ namespace VeeamTest
             this.blockSize = blockSize;
         }
 
-        protected Processor(Stream inputStream, Stream outputStream, OperationType operationType, HashTypes hashType = HashTypes.Undefined)
+        protected BaseProcessor(Stream inputStream, Stream outputStream, OperationType operationType, HashTypes hashType = HashTypes.Undefined)
         {
             this.hashType = hashType;
             this.inputStream = inputStream;
@@ -65,7 +62,7 @@ namespace VeeamTest
             return !isAborder;
         }
 
-        public abstract bool Init();
+        protected abstract bool Init();
       
         // Start threads and wait when all thread were stoped.
         private void Process()
@@ -102,7 +99,12 @@ namespace VeeamTest
                 catch (ArgumentOutOfRangeException e)
                 {
                     this.isAborder = true;
+                    Console.WriteLine("Block reading fail. Reading of input file are stoped.{0}", e.Message);
                     return;
+                }
+                catch (ThreadAbortException e)
+                {
+                    Console.WriteLine(e.Message);
                 }
             }
         }
@@ -119,7 +121,7 @@ namespace VeeamTest
                     this.streamWriter.WriteBlock(blocks[i]);
                     this.outputStream.Flush();
                 }
-
+                    
             } while(this.isRun);
 
             blocks = this.blocksHandler.GetAvailableBlocks();
@@ -133,20 +135,20 @@ namespace VeeamTest
         public void Abort()
         {
             this.isAborder = true;
+            
             if (this.producerTread != null)
             {
                 this.producerTread.Abort();
             }
 
-            if (this.consumerThread != null)
-            {
-                this.producerTread.Abort();
-            }
-           
             if (this.blocksHandler != null)
             {
-                this.blocksHandler.Cancel();
-                Console.WriteLine("Block handler Stoped.");
+                this.blocksHandler.Abort();
+            }
+
+            if (this.consumerThread != null)
+            {
+                this.consumerThread.Abort();
             }
         }
     }

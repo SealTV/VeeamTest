@@ -88,19 +88,24 @@ namespace VeeamTest.Blocks
                 {
                     lock (this.inpitLockObject)
                     {
-                        while(this.input.Count == 0)
+                        while (this.input.Count == 0)
                             Monitor.Wait(this.inpitLockObject);
 
                         block = this.input.Dequeue();
                         Monitor.PulseAll(this.inpitLockObject);
                     }
 
-                    if(block == null)
+                    if (block == null)
                         continue;
 
                     action.Act(block);
 
                     this.EnqueueHandledBlock(block);
+                }
+                catch (ThreadAbortException e)
+                {
+                    Console.WriteLine(e.Message);
+                    return;
                 }
                 catch(Exception e)
                 {
@@ -108,22 +113,16 @@ namespace VeeamTest.Blocks
                     {
                         collback(e.Message);
                     }
+                    return;
                 }
             } while(block != null);
         }
 
-        public void Cancel()
+        public void Abort()
         {
             for(int i = 0; i < this.workers.Length; i++)
             {
-                try
-                {
-                    this.workers[i].Abort();
-                }
-                catch(ThreadAbortException e)
-                {
-                    Console.WriteLine("Worker aborted.");
-                }
+                this.workers[i].Abort();
             }
         }
 

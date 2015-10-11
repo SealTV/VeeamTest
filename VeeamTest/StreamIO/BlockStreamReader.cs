@@ -15,6 +15,13 @@ namespace VeeamTest.StreamIO
         public BlockStreamReader(Stream stream)
         {
             this.stream = stream;
+            this.hashSize = 0;
+        }
+
+        public BlockStreamReader(Stream stream, int hastSize)
+        {
+            this.stream = stream;
+            this.hashSize = hastSize;
         }
 
         public Header GetHeader()

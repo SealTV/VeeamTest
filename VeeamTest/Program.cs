@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
+using VeeamTest.Processor;
 
 namespace VeeamTest
 {
+
     public class Program
     {
         public static void Main(string[] args)
@@ -22,7 +24,7 @@ namespace VeeamTest
             program.RunConsole(options);
         }
 
-        private Processor proccessor;
+        private BaseProcessor baseProcessor;
         private Stream inputStream;
         private Stream outputStream;
 
@@ -46,17 +48,17 @@ namespace VeeamTest
                 return;
             }
 
-            proccessor = null;
+            this.baseProcessor = null;
             if(options.IsCompress)
             {
-                proccessor = new CompressionProcessor(inputStream, outputStream, options.Blocksize, options.HashType);
+                this.baseProcessor = new CompressionProcessor(inputStream, outputStream, options.Blocksize, options.HashType);
             }
-            else if(options.IsDecompress)
+            else
             {
-                proccessor = new DecompressionProcessor(inputStream, outputStream);
+                this.baseProcessor = new DecompressionProcessor(inputStream, outputStream);
             }
 
-            var result = proccessor.Run();
+            var result = this.baseProcessor.Run();
             Console.WriteLine(result ? 1 : 0);
 
             this.DisposeStreams();
@@ -64,15 +66,12 @@ namespace VeeamTest
 
         private void Handler(object sender, ConsoleCancelEventArgs args)
         {
-            if(proccessor != null)
+            if (this.baseProcessor != null)
             {
-                proccessor.Abort();
+                this.baseProcessor.Abort();
             }
 
-            this.DisposeStreams();
-            Console.WriteLine("Canceled.");
-            Console.WriteLine(0);
-            args.Cancel = false;
+            args.Cancel = true;
         }
 
 
