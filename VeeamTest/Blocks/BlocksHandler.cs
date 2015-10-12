@@ -24,7 +24,6 @@ namespace VeeamTest.Blocks
         private EventWaitHandle readAdd = new EventWaitHandle(false, EventResetMode.AutoReset);
         private EventWaitHandle readGet = new EventWaitHandle(false, EventResetMode.AutoReset);
         private EventWaitHandle writeAdd = new EventWaitHandle(false, EventResetMode.AutoReset);
-        private EventWaitHandle writeGet = new EventWaitHandle(false, EventResetMode.AutoReset);
 
         /// <summary>
         /// </summary>
@@ -162,7 +161,7 @@ namespace VeeamTest.Blocks
                 result = this.output.ToList();
                 this.output.Clear();
             }
-            this.writeGet.Set();
+
             this.writeAdd.Set();
             return result;
         }
@@ -182,7 +181,6 @@ namespace VeeamTest.Blocks
             {  
                 this.output.Enqueue(block);
             }
-            this.writeGet.Set();
         }
     }
 }
