@@ -4,6 +4,7 @@ using VeeamTest.Blocks;
 namespace VeeamTest.StreamIO
 {
     using System;
+    using System.IO.Compression;
 
     public class BlockStreamWriter : IStreamWriter
     {

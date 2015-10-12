@@ -4,7 +4,7 @@ using VeeamTest.Blocks;
 namespace VeeamTest.StreamIO
 {
     using System;
-
+    using System.IO.Compression;
     using VeeamTest.Hasher;
 
     public class BlockStreamReader : IStreamReader
@@ -74,7 +74,6 @@ namespace VeeamTest.StreamIO
                 Hash = hash,
                 Data = data
             };
-
             return block;
         }
     }

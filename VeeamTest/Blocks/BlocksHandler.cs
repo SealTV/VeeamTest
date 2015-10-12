@@ -21,6 +21,10 @@ namespace VeeamTest.Blocks
         private const int MAX_QUEUE_SIZE = 30;
         private event Action<string> collback;
 
+        private EventWaitHandle readAdd = new EventWaitHandle(false, EventResetMode.AutoReset);
+        private EventWaitHandle readGet = new EventWaitHandle(false, EventResetMode.AutoReset);
+        private EventWaitHandle writeAdd = new EventWaitHandle(false, EventResetMode.AutoReset);
+        private EventWaitHandle writeGet = new EventWaitHandle(false, EventResetMode.AutoReset);
 
         /// <summary>
         /// </summary>
@@ -40,6 +44,7 @@ namespace VeeamTest.Blocks
             for (int i = 0; i < threadsCount; i++)
             {
                 this.workers[i] = new Thread(()=> Run(operationType));
+                this.workers[i].Priority = ThreadPriority.Lowest;
             }
 
             this.hashType = hashType;
@@ -59,13 +64,10 @@ namespace VeeamTest.Blocks
 
         public void Stop()
         {
-            for (int i = 0; i < this.workers.Length; i++)
+            lock (this.inpitLockObject)
             {
-                lock (this.inpitLockObject)
-                {
+                for(int i = 0; i < this.workers.Length; i++)
                     this.input.Enqueue(null);
-                    Monitor.PulseAll(this.inpitLockObject);
-                }
             }
 
             foreach (var w in this.workers)
@@ -81,28 +83,34 @@ namespace VeeamTest.Blocks
             IBlockHandlingAction action = operationType == OperationType.Compress
                                           ? (IBlockHandlingAction)(new CompressingBlockAction(hasher))
                                           : (IBlockHandlingAction)(new DecompressingBlockAction(hasher));
-            Block block = null;
-            do
+            while(true)
             {
+                Block block = null;
                 try
                 {
                     lock (this.inpitLockObject)
                     {
-                        while (this.input.Count == 0)
-                            Monitor.Wait(this.inpitLockObject);
-
-                        block = this.input.Dequeue();
-                        Monitor.PulseAll(this.inpitLockObject);
+                        if(this.input.Count > 0)
+                        {
+                            block = this.input.Dequeue();
+                            // Stoping work
+                            if(block == null)
+                                return;
+                        }
                     }
+                    this.readAdd.Set();
 
-                    if (block == null)
-                        continue;
-
-                    action.Act(block);
-
-                    this.EnqueueHandledBlock(block);
+                    if(block != null)
+                    {
+                        action.Act(block);
+                        this.EnqueueHandledBlock(block);
+                    }
+                    else
+                    {
+                        this.readGet.WaitOne();
+                    }
                 }
-                catch (ThreadAbortException e)
+                catch(ThreadAbortException e)
                 {
                     Console.WriteLine(e.Message);
                     return;
@@ -115,7 +123,7 @@ namespace VeeamTest.Blocks
                     }
                     return;
                 }
-            } while(block != null);
+            }
         }
 
         public void Abort()
@@ -128,16 +136,22 @@ namespace VeeamTest.Blocks
 
         public void AddUnhandledBlock(Block block)
         {
+            bool isFullQueue = false;
+
             lock (this.inpitLockObject)
             {
-                while(this.input.Count >= MAX_QUEUE_SIZE)
-                {
-                    Monitor.Wait(this.inpitLockObject);
-                }
-
-                this.input.Enqueue(block);
-                Monitor.PulseAll(this.inpitLockObject);
+                isFullQueue = this.input.Count >= MAX_QUEUE_SIZE;
             }
+
+            if(isFullQueue)
+                this.readAdd.WaitOne();
+
+            lock (this.inpitLockObject)
+            {
+                this.input.Enqueue(block);
+            }
+
+            this.readGet.Set();
         }
 
         public List<Block> GetAvailableBlocks()
@@ -147,26 +161,28 @@ namespace VeeamTest.Blocks
             {
                 result = this.output.ToList();
                 this.output.Clear();
-
-                Monitor.PulseAll(this.outputLockObject);
             }
-
+            this.writeGet.Set();
+            this.writeAdd.Set();
             return result;
         }
 
         private void EnqueueHandledBlock(Block block)
         {
+            bool isFullQueue = false;
             lock (this.outputLockObject)
             {
-                while(this.output.Count >= MAX_QUEUE_SIZE)
-                {
-                    Monitor.Wait(this.outputLockObject);
-                }
-
-                this.output.Enqueue(block);
-                Monitor.PulseAll(this.outputLockObject);
+                isFullQueue = this.output.Count >= MAX_QUEUE_SIZE;
             }
-        }
 
+            if(isFullQueue)
+                this.writeAdd.WaitOne();
+
+            lock (this.outputLockObject)
+            {  
+                this.output.Enqueue(block);
+            }
+            this.writeGet.Set();
+        }
     }
 }

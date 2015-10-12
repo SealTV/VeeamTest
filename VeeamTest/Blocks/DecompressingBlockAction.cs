@@ -16,20 +16,18 @@ namespace VeeamTest.Blocks
 
         public void Act(Block block)
         {
-
             byte[] data = new byte[block.OriginBlockSize];
-            using (var stream = new MemoryStream(block.Data))
+            using(var stream = new MemoryStream(block.Data))
             {
-                using (var compressStream = new GZipStream(stream, CompressionMode.Decompress, true))
+                using(var compressStream = new GZipStream(stream, CompressionMode.Decompress, true))
                 {
                     compressStream.Read(data, 0, block.OriginBlockSize);
                     stream.Close();
                     compressStream.Close();
                 }
-
             }
-
             block.Data = data;
+
             byte[] hash = this.hasher.GetHash(block.Data);
 
             var hashString = Hasher.Hasher.ToString(hash);
