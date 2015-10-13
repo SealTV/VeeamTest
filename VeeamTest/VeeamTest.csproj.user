@@ -4,6 +4,6 @@
     <StartArguments>-c -i C:/data/test/1.mov -o C:/data/test/2.mov</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-    <StartArguments>-c -i C:\data\test\1.mov -o C:\data\test\2.mov</StartArguments>
+    <StartArguments>-c -i C:\data\test\1.iso -o C:\data\test\2.iso</StartArguments>
   </PropertyGroup>
 </Project>

@@ -21,14 +21,15 @@ namespace VeeamTest.Blocks
         private const int MAX_QUEUE_SIZE = 30;
         private event Action<string> collback;
 
-        private EventWaitHandle readAdd = new EventWaitHandle(false, EventResetMode.AutoReset);
-        private EventWaitHandle readGet = new EventWaitHandle(false, EventResetMode.AutoReset);
-        private EventWaitHandle writeAdd = new EventWaitHandle(false, EventResetMode.AutoReset);
+        private readonly EventWaitHandle addUnhandledBlockWaitHandler = new EventWaitHandle(false, EventResetMode.AutoReset);
+        private readonly EventWaitHandle getUnhandledBlockWaitHandler = new EventWaitHandle(false, EventResetMode.AutoReset);
+        private readonly EventWaitHandle addHandledBlockWaitHandler = new EventWaitHandle(false, EventResetMode.AutoReset);
 
         /// <summary>
         /// </summary>
         /// <param name="threadsCount">Count of workers.</param>
         /// <param name="hashType">Type of hash.</param>
+        /// <param name="operationType"></param>
         /// <param name="collback"></param>
         public BlocksHandler(int threadsCount, HashTypes hashType, OperationType operationType,  Action<string> collback)
         {
@@ -97,7 +98,7 @@ namespace VeeamTest.Blocks
                                 return;
                         }
                     }
-                    this.readAdd.Set();
+                    this.addUnhandledBlockWaitHandler.Set();
 
                     if(block != null)
                     {
@@ -106,7 +107,7 @@ namespace VeeamTest.Blocks
                     }
                     else
                     {
-                        this.readGet.WaitOne();
+                        this.getUnhandledBlockWaitHandler.WaitOne();
                     }
                 }
                 catch(ThreadAbortException e)
@@ -135,22 +136,21 @@ namespace VeeamTest.Blocks
 
         public void AddUnhandledBlock(Block block)
         {
-            bool isFullQueue = false;
-
+            bool isFullQueue;
             lock (this.inpitLockObject)
             {
                 isFullQueue = this.input.Count >= MAX_QUEUE_SIZE;
             }
 
             if(isFullQueue)
-                this.readAdd.WaitOne();
+                this.addUnhandledBlockWaitHandler.WaitOne();
 
             lock (this.inpitLockObject)
             {
                 this.input.Enqueue(block);
             }
 
-            this.readGet.Set();
+            this.getUnhandledBlockWaitHandler.Set();
         }
 
         public List<Block> GetAvailableBlocks()
@@ -162,20 +162,20 @@ namespace VeeamTest.Blocks
                 this.output.Clear();
             }
 
-            this.writeAdd.Set();
+            this.addHandledBlockWaitHandler.Set();
             return result;
         }
 
         private void EnqueueHandledBlock(Block block)
         {
-            bool isFullQueue = false;
+            bool isFullQueue;
             lock (this.outputLockObject)
             {
                 isFullQueue = this.output.Count >= MAX_QUEUE_SIZE;
             }
 
             if(isFullQueue)
-                this.writeAdd.WaitOne();
+                this.addHandledBlockWaitHandler.WaitOne();
 
             lock (this.outputLockObject)
             {  
